@@ -6,7 +6,7 @@ import numpy as np
 import uuid
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, VectorParams, PointStruct, ScoredPoint
 
 from ...core.exceptions import VectorStoreError
 
@@ -149,15 +149,17 @@ class QdrantVectorStore:
         try:
             query_vector = query_embedding.tolist() if isinstance(query_embedding, np.ndarray) else query_embedding
 
-            search_result = self.client.search(
+            # Use query_points for newer Qdrant client versions
+            search_result = self.client.query_points(
                 collection_name=collection_name,
-                query_vector=query_vector,
+                query=query_vector,
                 limit=top_k,
-                score_threshold=score_threshold
+                score_threshold=score_threshold,
+                with_payload=True
             )
 
             results = []
-            for scored_point in search_result:
+            for scored_point in search_result.points:
                 result = {
                     "id": scored_point.id,
                     "score": scored_point.score,
