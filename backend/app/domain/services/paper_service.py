@@ -153,7 +153,7 @@ class PaperService:
 
         chunk_docs = [
             {
-                "id": f"{paper_id}_chunk_{chunk['chunk_id']}",
+                "id": str(uuid.uuid4()),
                 "chunk_id": chunk["chunk_id"],
                 "content": chunk["content"],
                 "start_pos": chunk["start_pos"],
@@ -183,12 +183,10 @@ class PaperService:
         Raises:
             PaperNotFoundError: If paper not found
         """
-        # Search for paper by ID in metadata collection
-        results = self.vector_store.search(
+        # Get all papers and find the one with matching ID
+        results = self.vector_store.get_all_points(
             collection_name=self.papers_collection,
-            query_embedding=self.embedding_model.encode([""])[0],  # Dummy query
-            top_k=1000,  # Get all papers
-            score_threshold=0.0
+            limit=1000
         )
 
         for result in results:
@@ -203,12 +201,10 @@ class PaperService:
         Returns:
             List of all paper metadata
         """
-        # Get all papers using a dummy query
-        results = self.vector_store.search(
+        # Get all papers using scroll
+        results = self.vector_store.get_all_points(
             collection_name=self.papers_collection,
-            query_embedding=self.embedding_model.encode([""])[0],
-            top_k=1000,
-            score_threshold=0.0
+            limit=1000
         )
 
         return results

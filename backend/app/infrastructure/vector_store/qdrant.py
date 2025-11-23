@@ -216,15 +216,73 @@ class QdrantVectorStore:
         """
         try:
             info = self.client.get_collection(collection_name=collection_name)
-            return {
+            
+            result = {
                 "name": collection_name,
-                "vectors_count": info.vectors_count,
-                "points_count": info.points_count,
-                "status": str(info.status)
+                "points_count": info.points_count if hasattr(info, 'points_count') else 0,
+                "status": str(info.status) if hasattr(info, 'status') else 'unknown'
             }
+            
+            if hasattr(info, 'vectors_count'):
+                result["vectors_count"] = info.vectors_count
+            
+            return result
+            
         except Exception as e:
             logger.error(f"Error getting collection info: {e}")
-            return {}
+            return {
+                "name": collection_name,
+                "points_count": 0,
+                "status": "error"
+            }
+
+    def get_all_points(
+        self,
+        collection_name: str,
+        limit: int = 1000
+    ) -> List[Dict[str, Any]]:
+        """Get all points from a collection using scroll.
+
+        Args:
+            collection_name: Name of the collection
+            limit: Maximum number of points to retrieve
+
+        Returns:
+            List of all points with their payloads
+        """
+        try:
+            results = []
+            offset = None
+
+            while True:
+                response = self.client.scroll(
+                    collection_name=collection_name,
+                    limit=min(100, limit - len(results)),
+                    offset=offset,
+                    with_payload=True,
+                    with_vectors=False
+                )
+
+                points, next_offset = response
+
+                for point in points:
+                    result = {
+                        "id": point.id,
+                        **point.payload
+                    }
+                    results.append(result)
+
+                if next_offset is None or len(results) >= limit:
+                    break
+
+                offset = next_offset
+
+            logger.info(f"Retrieved {len(results)} points from {collection_name}")
+            return results
+
+        except Exception as e:
+            logger.error(f"Error getting all points: {e}")
+            return []
 
     def health_check(self) -> bool:
         """Check if the vector store is accessible.
