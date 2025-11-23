@@ -17,7 +17,7 @@ from ...domain.models import (
 from ...domain.services import PaperService
 from ...application.dependencies import get_paper_service
 from ...core.config import settings
-from ...core.exceptions import PaperNotFoundError, InvalidFileError
+from ...core.exceptions import PaperNotFoundError, InvalidFileError, DuplicatePaperError
 
 router = APIRouter(prefix="/papers", tags=["papers"])
 
@@ -137,6 +137,8 @@ async def upload_paper(
 
     except InvalidFileError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except DuplicatePaperError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=500,

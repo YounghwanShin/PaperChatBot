@@ -94,8 +94,8 @@ This application helps researchers manage, search, and interact with academic pa
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd paper-chat-bot
+git clone https://github.com/YounghwanShin/PaperChatBot.git
+cd PaperChatBot
 ```
 
 2. Set up environment variables:

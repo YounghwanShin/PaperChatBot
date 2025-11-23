@@ -96,6 +96,22 @@ class VectorStoreProtocol(Protocol):
         """
         ...
 
+    def get_all_points(
+        self,
+        collection_name: str,
+        limit: int = 1000
+    ) -> List[Dict[str, Any]]:
+        """Get all points from a collection.
+
+        Args:
+            collection_name: Name of the collection
+            limit: Maximum number of points to retrieve
+
+        Returns:
+            List of all points with their payloads
+        """
+        ...
+
     def health_check(self) -> bool:
         """Check if the vector store is accessible.
 
