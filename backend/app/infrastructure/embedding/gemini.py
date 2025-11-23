@@ -31,11 +31,18 @@ class GeminiEmbedding:
         except Exception as e:
             raise EmbeddingError(f"Failed to initialize Gemini client: {e}")
 
-    def encode(self, texts: List[str]) -> np.ndarray:
+    def encode(
+        self,
+        texts: List[str],
+        task_type: str = "RETRIEVAL_DOCUMENT"
+    ) -> np.ndarray:
         """Encode texts using Gemini API.
 
         Args:
             texts: List of texts to encode
+            task_type: Embedding task type.
+                      "RETRIEVAL_DOCUMENT" for indexing documents,
+                      "RETRIEVAL_QUERY" for search queries
 
         Returns:
             Array of embeddings
@@ -48,7 +55,7 @@ class GeminiEmbedding:
                 model=self.model_name,
                 contents=texts,
                 config=types.EmbedContentConfig(
-                    task_type="RETRIEVAL_DOCUMENT",
+                    task_type=task_type,
                     output_dimensionality=self.dimension
                 )
             )

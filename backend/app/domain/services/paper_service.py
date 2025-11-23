@@ -61,8 +61,10 @@ class PaperService:
         Returns:
             List of matching papers with scores
         """
-        # Encode query
-        query_embedding = self.embedding_model.encode([query])[0]
+        # Encode query with RETRIEVAL_QUERY task type
+        query_embedding = self.embedding_model.encode(
+            [query], task_type="RETRIEVAL_QUERY"
+        )[0]
 
         # Search in papers metadata collection
         results = self.vector_store.search(
