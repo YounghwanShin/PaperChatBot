@@ -149,7 +149,6 @@ class QdrantVectorStore:
         try:
             query_vector = query_embedding.tolist() if isinstance(query_embedding, np.ndarray) else query_embedding
 
-            # Use query_points for newer Qdrant client versions
             search_result = self.client.query_points(
                 collection_name=collection_name,
                 query=query_vector,
