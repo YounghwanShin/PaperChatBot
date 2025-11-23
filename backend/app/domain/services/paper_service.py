@@ -10,7 +10,7 @@ from ...core.interfaces import (
     VectorStoreProtocol,
     PDFProcessorProtocol
 )
-from ...core.exceptions import PaperNotFoundError, PDFProcessingError
+from ...core.exceptions import PaperNotFoundError, PDFProcessingError, DuplicatePaperError
 
 
 class PaperService:
@@ -100,7 +100,14 @@ class PaperService:
 
         Raises:
             PDFProcessingError: If PDF processing fails
+            DuplicatePaperError: If paper with same title already exists
         """
+        # Check for duplicate paper by title
+        existing_papers = self.list_papers()
+        for paper in existing_papers:
+            if paper.get("title", "").strip().lower() == title.strip().lower():
+                raise DuplicatePaperError(f"Paper with title '{title}' already exists")
+
         # Generate unique paper ID
         paper_id = str(uuid.uuid4())
 

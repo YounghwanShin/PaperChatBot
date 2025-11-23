@@ -34,3 +34,8 @@ class PaperNotFoundError(ApplicationError):
 class InvalidFileError(ApplicationError):
     """Exception raised for invalid file uploads."""
     pass
+
+
+class DuplicatePaperError(ApplicationError):
+    """Exception raised when attempting to upload a duplicate paper."""
+    pass
