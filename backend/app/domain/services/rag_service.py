@@ -51,9 +51,11 @@ class RAGService:
             Tuple of (retrieved chunks, collection name)
         """
         chunks_collection = f"{self.chunks_collection_prefix}_{paper_id}"
-        
-        # Encode query
-        query_embedding = self.embedding_model.encode([query])[0]
+
+        # Encode query with RETRIEVAL_QUERY task type
+        query_embedding = self.embedding_model.encode(
+            [query], task_type="RETRIEVAL_QUERY"
+        )[0]
 
         # Search in paper chunks
         results = self.vector_store.search(
