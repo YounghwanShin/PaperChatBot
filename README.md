@@ -1,11 +1,13 @@
 # Paper Research Assistant
+(영어데이터처리를 위한 프로그래밍 과제)
 
 AI-powered research paper management system with semantic search and interactive Q&A.
 
 ## Overview
 
-This application helps researchers manage, search, and interact with academic papers. It provides:
+This application helps researchers manage, search, and interact with academic papers.
 
+It provides
 - **Semantic Search**: Find papers using natural language queries based on title and abstract
 - **PDF Upload**: Upload and process research papers with automatic text extraction
 - **Interactive Q&A**: Chat with papers using RAG (Retrieval-Augmented Generation)
