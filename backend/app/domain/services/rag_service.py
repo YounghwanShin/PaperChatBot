@@ -67,6 +67,55 @@ class RAGService:
 
         return results, chunks_collection
 
+    def rewrite_query(self, original_query: str, temperature: float = 0.3) -> str:
+        """Rewrite user query for better retrieval performance.
+
+        Args:
+            original_query: Original user query
+            temperature: Sampling temperature for rewriting
+
+        Returns:
+            Rewritten query optimized for academic paper retrieval
+        """
+        rewrite_prompt = """You are a query optimization expert for academic paper retrieval systems.
+
+Your task: Rewrite the user's question to optimize it for semantic search in academic papers.
+
+**Guidelines:**
+1. Convert colloquial language to academic terminology
+2. Expand abbreviations and acronyms if they're common in the field
+3. Make implicit concepts explicit
+4. Preserve the core intent and meaning
+5. Keep it concise (1-2 sentences max)
+6. Use the SAME language as the original query (Korean→Korean, English→English)
+
+**Examples:**
+- "What's this paper about?" → "What is the main contribution and research objective of this paper?"
+- "이 논문의 핵심이 뭐야?" → "이 논문의 주요 기여와 핵심 방법론은 무엇인가?"
+- "How does it work?" → "What is the proposed methodology and technical approach?"
+- "Results?" → "What are the experimental results and performance metrics?"
+
+**Important:**
+- Do NOT add information not in the original query
+- Do NOT change the question's intent
+- Output ONLY the rewritten query, nothing else
+
+Original query: {query}
+
+Rewritten query:"""
+
+        prompt = rewrite_prompt.format(query=original_query)
+
+        try:
+            rewritten = self.llm_client.generate(
+                prompt=prompt,
+                temperature=temperature
+            )
+            return rewritten.strip()
+        except Exception as e:
+            # If rewriting fails, return original query
+            return original_query
+
     def format_context(self, retrieved_chunks: List[Dict]) -> str:
         """Format retrieved chunks into context string.
 
@@ -109,11 +158,8 @@ class RAGService:
 
         **Core Instructions:**
 
-        1.  **Strict Grounding:** Answer the user's question using ONLY the information provided in the "Context from the paper". Do not use external knowledge or make assumptions not supported by the text.
-        2.  **Natural Citation:**
-            * **NEVER** refer to the source text as "Context 1", "Context 2", "Chunk A", etc.
-            * Instead, cite information naturally (e.g., "The paper states...", "According to the authors...", "The results section indicates...").
-            * Directly quote key phrases if necessary to support your answer.
+        1.  **Strict Grounding:** Answer the user's question using ONLY the information provided in the "Section from the paper". Do not use external knowledge or make assumptions not supported by the text.
+        2.  **Citation:** Infer the paper section from the content (e.g., Abstract, Introduction, Methods, Results, Discussion) and cite it. Quote important phrases directly using quotation marks.
         3.  **Language Matching:** Always answer in the **same language** as the user's question. If the user asks in Korean, answer in Korean. If in English, answer in English.
         4.  **Tone & Style:** Maintain a professional, objective, and academic tone. Be concise but comprehensive.
 
@@ -168,7 +214,9 @@ class RAGService:
         query: str,
         conversation_history: List[Dict] = None,
         top_k: int = 5,
-        score_threshold: float = 0.5
+        score_threshold: float = 0.5,
+        enable_query_rewrite: bool = True,
+        query_rewrite_temperature: float = 0.3
     ) -> Dict:
         """Main chat function for paper-based Q&A.
 
@@ -178,14 +226,24 @@ class RAGService:
             conversation_history: Previous conversation
             top_k: Number of chunks to retrieve
             score_threshold: Minimum similarity threshold
+            enable_query_rewrite: Whether to rewrite query for better retrieval
+            query_rewrite_temperature: Temperature for query rewriting
 
         Returns:
-            Dictionary with answer, chunks, and confidence
+            Dictionary with answer, chunks, confidence, and rewritten_query
         """
-        # Retrieve relevant context
+        # Rewrite query if enabled
+        rewritten_query = None
+        search_query = query
+
+        if enable_query_rewrite:
+            rewritten_query = self.rewrite_query(query, query_rewrite_temperature)
+            search_query = rewritten_query
+
+        # Retrieve relevant context using rewritten query
         retrieved_chunks, collection_name = self.retrieve_context(
             paper_id=paper_id,
-            query=query,
+            query=search_query,
             top_k=top_k,
             score_threshold=score_threshold
         )
@@ -193,7 +251,7 @@ class RAGService:
         # Format context
         context = self.format_context(retrieved_chunks)
 
-        # Generate answer
+        # Generate answer using ORIGINAL query (for natural response)
         answer = self.generate_response(
             query=query,
             context=context,
@@ -213,5 +271,6 @@ class RAGService:
                 }
                 for chunk in retrieved_chunks
             ],
-            "confidence": confidence
+            "confidence": confidence,
+            "rewritten_query": rewritten_query
         }

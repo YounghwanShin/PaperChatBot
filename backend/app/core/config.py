@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     chunk_top_k: int = 5
     chunk_threshold: float = 0.5
 
+    # Query Rewrite
+    enable_query_rewrite: bool = True
+    query_rewrite_temperature: float = 0.3
+
     # PDF Processing
     chunk_size: int = 1000
     chunk_overlap: int = 200
@@ -56,7 +60,7 @@ class Settings(BaseSettings):
 
     # arXiv Settings
     arxiv_category: str = "cs.CL"  # NLP category
-    arxiv_max_results: int = 20  # Reduced to avoid quota issues
+    arxiv_max_results: int = 25  # Reduced to avoid quota issues
     arxiv_delay_seconds: float = 3.0  # API rate limit compliance
     arxiv_num_retries: int = 3
 

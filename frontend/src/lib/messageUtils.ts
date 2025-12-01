@@ -6,12 +6,14 @@ export interface Message {
   content: string;
   timestamp: Date;
   confidence?: number;
+  rewrittenQuery?: string;
 }
 
 export function createMessage(
   role: 'user' | 'assistant',
   content: string,
-  confidence?: number
+  confidence?: number,
+  rewrittenQuery?: string
 ): Message {
   return {
     id: Date.now().toString() + Math.random(),
@@ -19,6 +21,7 @@ export function createMessage(
     content,
     timestamp: new Date(),
     confidence,
+    rewrittenQuery,
   };
 }
 

@@ -40,7 +40,9 @@ async def chat_with_paper(
             query=request.message,
             conversation_history=conversation_history,
             top_k=settings.chunk_top_k,
-            score_threshold=settings.chunk_threshold
+            score_threshold=settings.chunk_threshold,
+            enable_query_rewrite=settings.enable_query_rewrite,
+            query_rewrite_temperature=settings.query_rewrite_temperature
         )
 
         retrieved_chunks = [
@@ -55,7 +57,8 @@ async def chat_with_paper(
         response = ChatResponse(
             answer=result["answer"],
             retrieved_chunks=retrieved_chunks,
-            confidence=result["confidence"]
+            confidence=result["confidence"],
+            rewritten_query=result.get("rewritten_query")
         )
 
         return response
