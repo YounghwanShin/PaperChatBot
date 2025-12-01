@@ -16,6 +16,9 @@ google-genai>=1.0.0
 # PDF Processing
 PyMuPDF>=1.23.0
 
+# arXiv API
+arxiv>=2.1.0
+
 # Data Processing
 numpy==1.26.3
 

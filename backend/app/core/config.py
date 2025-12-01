@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     max_upload_size: int = 50 * 1024 * 1024  # 50MB
     upload_dir: str = "uploads"
 
+    # arXiv Settings
+    arxiv_category: str = "cs.CL"  # NLP category
+    arxiv_max_results: int = 20  # Reduced to avoid quota issues
+    arxiv_delay_seconds: float = 3.0  # API rate limit compliance
+    arxiv_num_retries: int = 3
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

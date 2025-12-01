@@ -83,6 +83,7 @@ class PaperService:
         abstract: str,
         authors: str = "",
         year: int = None,
+        arxiv_id: str = None,
         chunk_size: int = 1000,
         chunk_overlap: int = 200
     ) -> Tuple[str, int]:
@@ -94,6 +95,7 @@ class PaperService:
             abstract: Paper abstract
             authors: Paper authors
             year: Publication year
+            arxiv_id: arXiv paper ID (optional)
             chunk_size: Size of text chunks
             chunk_overlap: Overlap between chunks
 
@@ -102,11 +104,16 @@ class PaperService:
 
         Raises:
             PDFProcessingError: If PDF processing fails
-            DuplicatePaperError: If paper with same title already exists
+            DuplicatePaperError: If paper with same title or arXiv ID already exists
         """
-        # Check for duplicate paper by title
+        # Check for duplicate paper by arXiv ID (if provided) or title
         existing_papers = self.list_papers()
         for paper in existing_papers:
+            # Check arXiv ID first (most reliable)
+            if arxiv_id and paper.get("arxiv_id") == arxiv_id:
+                raise DuplicatePaperError(f"Paper with arXiv ID '{arxiv_id}' already exists")
+
+            # Fallback to title check
             if paper.get("title", "").strip().lower() == title.strip().lower():
                 raise DuplicatePaperError(f"Paper with title '{title}' already exists")
 
@@ -138,6 +145,7 @@ class PaperService:
             "authors": authors,
             "abstract": abstract,
             "year": year,
+            "arxiv_id": arxiv_id,  # Store arXiv ID (None for manual uploads)
             "pdf_path": pdf_path,
             "page_count": pdf_metadata.get("page_count", 0),
             "created_at": datetime.now().isoformat()

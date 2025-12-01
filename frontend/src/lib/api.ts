@@ -65,6 +65,42 @@ export interface PaperListResponse {
   total: number;
 }
 
+export interface ArxivPaperResult {
+  paper_id: string;
+  arxiv_id: string;
+  title: string;
+  chunks_created: number;
+}
+
+export interface ArxivFetchError {
+  arxiv_id: string;
+  title: string;
+  error: string;
+}
+
+export interface ArxivFetchResponse {
+  total_found: number;
+  successfully_processed: number;
+  skipped_duplicates: number;
+  failed: number;
+  papers: ArxivPaperResult[];
+  errors: ArxivFetchError[];
+}
+
+export interface ArxivFetchTaskStart {
+  task_id: string;
+  message: string;
+  status: string;
+}
+
+export interface ArxivFetchTaskStatus {
+  task_id: string;
+  status: 'processing' | 'completed' | 'failed';
+  progress?: string;
+  result?: ArxivFetchResponse;
+  error?: string;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -209,6 +245,40 @@ class ApiClient {
           message,
           conversation_history: conversationHistory,
         }
+      );
+      return response.data;
+    } catch (error) {
+      throw new ApiError(
+        getErrorMessage(error),
+        getStatusCode(error),
+        error
+      );
+    }
+  }
+
+  async fetchRecentPapers(daysAgo: number = 7): Promise<ArxivFetchTaskStart> {
+    try {
+      const response = await this.client.post<ArxivFetchTaskStart>(
+        '/papers/fetch-recent',
+        null,
+        {
+          params: { days_ago: daysAgo }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new ApiError(
+        getErrorMessage(error),
+        getStatusCode(error),
+        error
+      );
+    }
+  }
+
+  async getFetchStatus(taskId: string): Promise<ArxivFetchTaskStatus> {
+    try {
+      const response = await this.client.get<ArxivFetchTaskStatus>(
+        `/papers/fetch-status/${taskId}`
       );
       return response.data;
     } catch (error) {
