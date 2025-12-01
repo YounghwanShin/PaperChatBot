@@ -12,7 +12,12 @@ from .schemas import (
     RetrievedChunk,
     PaperListResponse,
     HealthResponse,
-    ErrorResponse
+    ErrorResponse,
+    ArxivPaperResult,
+    ArxivFetchError,
+    ArxivFetchResponse,
+    ArxivFetchTaskStart,
+    ArxivFetchTaskStatus
 )
 
 __all__ = [
@@ -28,4 +33,9 @@ __all__ = [
     "PaperListResponse",
     "HealthResponse",
     "ErrorResponse",
+    "ArxivPaperResult",
+    "ArxivFetchError",
+    "ArxivFetchResponse",
+    "ArxivFetchTaskStart",
+    "ArxivFetchTaskStatus",
 ]

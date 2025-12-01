@@ -1,10 +1,11 @@
 """Papers API router for search, upload, and management."""
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks
 from typing import Optional
 import os
 import uuid
 import shutil
+import logging
 
 from ...domain.models import (
     PaperSearchRequest,
@@ -12,14 +13,21 @@ from ...domain.models import (
     PaperSearchResult,
     PaperUploadResponse,
     PaperListResponse,
-    PaperMetadata
+    PaperMetadata,
+    ArxivFetchResponse,
+    ArxivPaperResult,
+    ArxivFetchError,
+    ArxivFetchTaskStart,
+    ArxivFetchTaskStatus
 )
-from ...domain.services import PaperService
-from ...application.dependencies import get_paper_service
+from ...domain.services import PaperService, ArxivService
+from ...application.dependencies import get_paper_service, get_arxiv_service
 from ...core.config import settings
 from ...core.exceptions import PaperNotFoundError, InvalidFileError, DuplicatePaperError
+from ...infrastructure.task_store import task_store
 
 router = APIRouter(prefix="/papers", tags=["papers"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/search", response_model=PaperSearchResponse)
@@ -259,3 +267,127 @@ async def delete_paper(
             status_code=500,
             detail=f"Error deleting paper: {str(e)}"
         )
+
+
+def _background_arxiv_fetch(
+    task_id: str,
+    days_ago: int,
+    arxiv_service: ArxivService
+):
+    """Background task for fetching and processing arXiv papers.
+
+    Args:
+        task_id: Task identifier
+        days_ago: Number of days to look back
+        arxiv_service: arXiv service instance
+    """
+    try:
+        logger.info(f"Starting background arXiv fetch task {task_id}")
+        task_store.update_progress(task_id, f"Searching arXiv for papers from last {days_ago} days...")
+
+        # Fetch and process papers
+        results = arxiv_service.fetch_and_process_papers(
+            days_ago=days_ago,
+            chunk_size=settings.chunk_size,
+            chunk_overlap=settings.chunk_overlap
+        )
+
+        logger.info(f"Task {task_id} completed: {results['successfully_processed']} papers processed")
+        task_store.set_completed(task_id, results)
+
+    except Exception as e:
+        logger.error(f"Task {task_id} failed: {str(e)}")
+        task_store.set_failed(task_id, str(e))
+
+
+@router.post("/fetch-recent", response_model=ArxivFetchTaskStart, status_code=202)
+async def fetch_recent_papers(
+    background_tasks: BackgroundTasks,
+    days_ago: int = 7,
+    arxiv_service: ArxivService = Depends(get_arxiv_service)
+) -> ArxivFetchTaskStart:
+    """Start background task to fetch and process recent NLP papers from arXiv.
+
+    Args:
+        background_tasks: FastAPI background tasks
+        days_ago: Number of days to look back (default: 7)
+        arxiv_service: arXiv service dependency
+
+    Returns:
+        Task start response with task ID for status polling
+
+    Raises:
+        HTTPException: If task creation fails
+    """
+    try:
+        # Create task
+        task_id = task_store.create_task()
+
+        # Add background task
+        background_tasks.add_task(
+            _background_arxiv_fetch,
+            task_id=task_id,
+            days_ago=days_ago,
+            arxiv_service=arxiv_service
+        )
+
+        logger.info(f"Created arXiv fetch task {task_id}")
+
+        return ArxivFetchTaskStart(
+            task_id=task_id,
+            message=f"Started fetching papers from arXiv (last {days_ago} days). Use /papers/fetch-status/{task_id} to check progress.",
+            status="started"
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to start arXiv fetch task: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error starting fetch task: {str(e)}"
+        )
+
+
+@router.get("/fetch-status/{task_id}", response_model=ArxivFetchTaskStatus)
+async def get_fetch_status(task_id: str) -> ArxivFetchTaskStatus:
+    """Get status of an arXiv fetch task.
+
+    Args:
+        task_id: Task identifier
+
+    Returns:
+        Task status with progress or result
+
+    Raises:
+        HTTPException: If task not found
+    """
+    status = task_store.get_status(task_id)
+
+    if status is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task {task_id} not found"
+        )
+
+    # Convert result to response model if completed
+    result_response = None
+    if status["status"] == "completed" and status["result"]:
+        results = status["result"]
+        papers = [ArxivPaperResult(**paper) for paper in results["papers"]]
+        errors = [ArxivFetchError(**error) for error in results["errors"]]
+
+        result_response = ArxivFetchResponse(
+            total_found=results["total_found"],
+            successfully_processed=results["successfully_processed"],
+            skipped_duplicates=results["skipped_duplicates"],
+            failed=results["failed"],
+            papers=papers,
+            errors=errors
+        )
+
+    return ArxivFetchTaskStatus(
+        task_id=task_id,
+        status=status["status"],
+        progress=status.get("progress"),
+        result=result_response,
+        error=status.get("error")
+    )

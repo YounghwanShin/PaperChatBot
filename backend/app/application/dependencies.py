@@ -13,7 +13,7 @@ from ..infrastructure.embedding import create_embedding_model
 from ..infrastructure.vector_store import create_vector_store
 from ..infrastructure.llm import create_llm_client
 from ..infrastructure.pdf_processor import create_pdf_processor
-from ..domain.services import PaperService, RAGService
+from ..domain.services import PaperService, RAGService, ArxivService
 
 
 @lru_cache()
@@ -107,4 +107,22 @@ def get_rag_service() -> RAGService:
         vector_store=vector_store,
         llm_client=llm_client,
         chunks_collection_prefix=settings.chunks_collection_prefix
+    )
+
+
+@lru_cache()
+def get_arxiv_service() -> ArxivService:
+    """Get or create arXiv service singleton.
+
+    Returns:
+        arXiv service instance
+    """
+    paper_service = get_paper_service()
+
+    return ArxivService(
+        paper_service=paper_service,
+        category=settings.arxiv_category,
+        max_results=settings.arxiv_max_results,
+        delay_seconds=settings.arxiv_delay_seconds,
+        num_retries=settings.arxiv_num_retries
     )
