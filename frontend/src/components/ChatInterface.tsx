@@ -50,7 +50,8 @@ export default function ChatInterface({ paper }: ChatInterfaceProps) {
       const assistantMessage = createMessage(
         'assistant',
         response.answer,
-        response.confidence
+        response.confidence,
+        response.rewritten_query
       );
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -137,19 +138,26 @@ export default function ChatInterface({ paper }: ChatInterfaceProps) {
                   <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
 
-                {message.confidence && message.role === 'assistant' && (
-                  <div className="mt-3 pt-3 border-t border-gray-200/50">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-500"
-                          style={{ width: `${message.confidence * 100}%` }}
-                        />
+                {message.role === 'assistant' && (message.confidence || message.rewrittenQuery) && (
+                  <div className="mt-3 pt-3 border-t border-gray-200/50 space-y-2">
+                    {message.rewrittenQuery && (
+                      <div className="text-xs text-gray-500 italic">
+                        <span className="font-semibold">Query optimized:</span> {message.rewrittenQuery}
                       </div>
-                      <span className="text-xs text-gray-600 font-medium">
-                        {(message.confidence * 100).toFixed(0)}%
-                      </span>
-                    </div>
+                    )}
+                    {message.confidence && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${message.confidence * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-600 font-medium">
+                          {(message.confidence * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

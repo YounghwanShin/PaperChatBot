@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     chunk_top_k: int = 5
     chunk_threshold: float = 0.5
 
+    # Query Rewrite
+    enable_query_rewrite: bool = True
+    query_rewrite_temperature: float = 0.3
+
     # PDF Processing
     chunk_size: int = 1000
     chunk_overlap: int = 200

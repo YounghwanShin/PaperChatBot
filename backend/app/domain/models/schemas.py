@@ -78,6 +78,10 @@ class ChatResponse(BaseModel):
         description="Retrieved chunks used"
     )
     confidence: float = Field(..., description="Response confidence score")
+    rewritten_query: Optional[str] = Field(
+        default=None,
+        description="Query rewritten for better retrieval (if query rewrite is enabled)"
+    )
 
 
 class PaperListResponse(BaseModel):

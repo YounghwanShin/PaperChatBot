@@ -20,6 +20,7 @@ export interface ChatResponse {
   answer: string;
   retrieved_chunks: RetrievedChunk[];
   confidence: number;
+  rewritten_query?: string;
 }
 
 export interface PaperSearchRequest {
