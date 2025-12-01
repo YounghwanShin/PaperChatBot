@@ -59,6 +59,7 @@ export interface PaperMetadata {
   pdf_path: string;
   page_count: number;
   created_at: string;
+  score?: number;
 }
 
 export interface PaperListResponse {
