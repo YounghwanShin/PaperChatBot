@@ -11,6 +11,7 @@ It provides
 - **Semantic Search**: Find papers using natural language queries based on title and abstract
 - **PDF Upload**: Upload and process research papers with automatic text extraction
 - **Interactive Q&A**: Chat with papers using RAG (Retrieval-Augmented Generation)
+- **arXiv Integration**: Automatically fetch and process recent NLP papers from arXiv
 - **Vector Database**: Efficient similarity search using Qdrant
 
 ## Features
@@ -31,6 +32,12 @@ It provides
 - Confidence scores for responses
 - Context-aware conversations
 
+### arXiv Integration
+- Automatic paper collection from arXiv (cs.CL category)
+- Background processing for batch imports
+- Task status tracking and progress monitoring
+- Duplicate detection and skipping
+
 ## Tech Stack
 
 ### Backend
@@ -39,6 +46,7 @@ It provides
 - **Embedding**: Google Gemini Embedding API (768-dim)
 - **LLM**: Google Gemini 2.0 Flash
 - **PDF Processing**: PyMuPDF
+- **arXiv Integration**: arxiv Python library
 - **Language**: Python 3.11
 
 ### Frontend
@@ -165,6 +173,12 @@ docker run -p 6333:6333 qdrant/qdrant
 - Ask questions about the paper
 - Receive answers grounded in paper content
 
+### 4. Fetch Papers from arXiv (API)
+- Use `POST /api/v1/papers/fetch-recent?days_ago=7` to start fetching recent papers
+- Get task_id in response
+- Poll `GET /api/v1/papers/fetch-status/{task_id}` to check progress
+- Papers are automatically processed and added to the database
+
 ## API Documentation
 
 ### Papers Endpoints
@@ -173,6 +187,8 @@ docker run -p 6333:6333 qdrant/qdrant
 - `GET /api/v1/papers` - List all papers
 - `GET /api/v1/papers/{paper_id}` - Get paper details
 - `DELETE /api/v1/papers/{paper_id}` - Delete paper
+- `POST /api/v1/papers/fetch-recent` - Fetch recent papers from arXiv (background task)
+- `GET /api/v1/papers/fetch-status/{task_id}` - Check arXiv fetch task status
 
 ### Chat Endpoints
 - `POST /api/v1/chat/{paper_id}` - Chat with paper
@@ -184,14 +200,45 @@ docker run -p 6333:6333 qdrant/qdrant
 
 ### Backend Settings (.env)
 ```
-gemini_api_key=your_api_key
+# Application
+app_name=Paper Research Assistant
+app_version=1.0.0
+debug=False
+
+# Server
+host=0.0.0.0
+port=8000
+
+# CORS (comma-separated)
+cors_origins=http://localhost:3000,http://127.0.0.1:3000
+
+# Qdrant
 qdrant_host=localhost
 qdrant_port=6333
+papers_collection=papers_metadata
+chunks_collection_prefix=paper_chunks
+
+# Embedding
+embedding_model=gemini-embedding-001
 embedding_dimension=768
-chunk_size=1000
-chunk_overlap=200
+
+# LLM
+gemini_api_key=your_gemini_api_key_here
+llm_model=gemini-2.0-flash
+llm_temperature=0.1
+llm_max_tokens=1024
+
+# Retrieval
 search_top_k=5
 similarity_threshold=0.6
+chunk_top_k=5
+chunk_threshold=0.5
+
+# PDF Processing
+chunk_size=1000
+chunk_overlap=200
+max_upload_size=52428800  # 50MB
+upload_dir=uploads
 ```
 
 ### Frontend Settings (.env.local)
