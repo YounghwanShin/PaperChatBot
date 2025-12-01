@@ -116,6 +116,10 @@ function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError;
     if (axiosError.response) {
+      const data = axiosError.response.data as any;
+      if (data && data.detail) {
+        return data.detail;
+      }
       return `Server error: ${axiosError.response.status}`;
     } else if (axiosError.request) {
       return 'No response from server. Please check your connection.';
