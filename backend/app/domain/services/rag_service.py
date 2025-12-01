@@ -158,11 +158,8 @@ Rewritten query:"""
 
         **Core Instructions:**
 
-        1.  **Strict Grounding:** Answer the user's question using ONLY the information provided in the "Context from the paper". Do not use external knowledge or make assumptions not supported by the text.
-        2.  **Natural Citation:**
-            * **NEVER** refer to the source text as "Context 1", "Context 2", "Chunk A", etc.
-            * Instead, cite information naturally (e.g., "The paper states...", "According to the authors...", "The results section indicates...").
-            * Directly quote key phrases if necessary to support your answer.
+        1.  **Strict Grounding:** Answer the user's question using ONLY the information provided in the "Section from the paper". Do not use external knowledge or make assumptions not supported by the text.
+        2.  **Citation:** Infer the paper section from the content (e.g., Abstract, Introduction, Methods, Results, Discussion) and cite it. Quote important phrases directly using quotation marks.
         3.  **Language Matching:** Always answer in the **same language** as the user's question. If the user asks in Korean, answer in Korean. If in English, answer in English.
         4.  **Tone & Style:** Maintain a professional, objective, and academic tone. Be concise but comprehensive.
 
