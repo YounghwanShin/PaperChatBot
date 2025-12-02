@@ -43,9 +43,9 @@ class Settings(BaseSettings):
     llm_max_tokens: int = 1024
 
     # Retrieval
-    search_top_k: int = 5
+    search_top_k: int = 8
     similarity_threshold: float = 0.6
-    chunk_top_k: int = 5
+    chunk_top_k: int = 8
     chunk_threshold: float = 0.5
 
     # Query Rewrite
@@ -60,7 +60,7 @@ class Settings(BaseSettings):
 
     # arXiv Settings
     arxiv_category: str = "cs.CL"  # NLP category
-    arxiv_max_results: int = 25  # Reduced to avoid quota issues
+    arxiv_max_results: int = 20  
     arxiv_delay_seconds: float = 3.0  # API rate limit compliance
     arxiv_num_retries: int = 3
 
