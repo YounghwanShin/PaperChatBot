@@ -60,7 +60,7 @@ class Settings(BaseSettings):
 
     # arXiv Settings
     arxiv_category: str = "cs.CL"  # NLP category
-    arxiv_max_results: int = 20  
+    arxiv_max_results: int = 50 
     arxiv_delay_seconds: float = 3.0  # API rate limit compliance
     arxiv_num_retries: int = 3
 
